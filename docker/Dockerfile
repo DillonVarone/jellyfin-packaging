@@ -8,6 +8,9 @@ ARG OS_VERSION=bookworm
 # Jellyfin FFMPEG package
 ARG FFMPEG_PACKAGE=jellyfin-ffmpeg7
 
+# mpegts proxy
+ARG MPEGTSPROXY_VERSION=1.0.0
+
 # https://github.com/intel/compute-runtime/releases
 ARG GMMLIB_VERSION=22.4.1
 ARG IGC_VERSION=1.0.17384.11
@@ -93,6 +96,7 @@ FROM --platform=linux/${TARGET_ARCH} ${IMAGE_ARCH}/debian:${OS_VERSION}-slim as 
 
 ARG OS_VERSION
 ARG FFMPEG_PACKAGE
+ARG MPEGTSPROXY_VERSION
 
 ARG GMMLIB_VERSION
 ARG IGC_VERSION
@@ -108,7 +112,7 @@ ARG DOTNET_ARCH
 ARG QEMU_ARCH
 
 # Copy the QEMU runtime
-COPY --from=qemu /usr/bin/* /usr/bin
+COPY --from=qemu /usr/bin/ /usr/bin
 
 # Set the health URL
 ENV HEALTHCHECK_URL=http://localhost:8096/health
@@ -156,7 +160,10 @@ RUN apt-get update \
  && apt-get remove gnupg apt-transport-https --yes \
  && apt-get clean autoclean --yes \
  && apt-get autoremove --yes \
- && rm -rf /var/cache/apt/archives* /var/lib/apt/lists/*
+ && rm -rf /var/cache/apt/archives* /var/lib/apt/lists/* \
+ && mkdir /opt/mpegtsproxy \
+ && curl -fSL "https://github.com/DillonVarone/mpegtsproxy_release/releases/download/v${MPEGTSPROXY_VERSION}/mpegtsproxy" -o /opt/mpegtsproxy/mpegtsproxy \
+ && chmod +x /opt/mpegtsproxy/mpegtsproxy
 
 # Intel VAAPI Tone mapping dependencies:
 # Prefer NEO to Beignet since the latter one doesn't support Comet Lake or newer for now.
